@@ -41,7 +41,7 @@ local Opcode	= { -- Opcode types.
 -- the prime goal of rerubi is to be the fastest:tm: alternative
 -- to a Lua in Lua bytecode execution
 
-local function gBit(Bit, Start, End) -- No tail-calls, yay.
+local function gBit(Bit, Start, End) -- No tail-calls, yay.esults, Rets 
 	if End then -- Thanks to cntkillme for giving input on this shorter, better approach.
 		local Res	= (Bit / 2 ^ (Start - 1)) % 2 ^ ((End - 1) - (Start - 1) + 1);
 
@@ -520,38 +520,34 @@ local function Wrap(Chunk, Env, Upvalues)
 						end;
 					end;
 				elseif (Enum == 29) then -- TAILCALL
-					local A	= Inst[1];
-					local B	= Inst[2];
-					local Stk	= Stack;
-					local Args, Results;
-					local Limit;
-					local Rets = 0;
+				  local A = Inst[1];
+				  local B = Inst[2];
+				  local Stk = Stack;
+				  local Args, Results;
+				  local Limit;
+				  local Rets = 0;
 
-					Args = {};
+				  Args = {};
 
-					if (B ~= 1) then
-						if (B ~= 0) then
-							Limit = A + B - 1;
-						else
-							Limit = Top;
-						end
+				  if (B ~= 1) then
+				    if (B ~= 0) then
+				      Limit = A + B - 1;
+				    else
+				      Limit = Top;
+				    end
 
-						for Idx = A + 1, Limit do
-							Args[#Args + 1] = Stk[Idx];
-						end
+				    for Idx = A + 1, Limit do
+				      Args[#Args + 1] = Stk[Idx];
+				    end
 
-						Results = {Stk[A](unpack(Args, 1, Limit - A))};
-					else
-						Results = {Stk[A]()};
-					end;
-
-					for Index in next, Results do -- get return count
-						if (Index > Rets) then
-							Rets = Index;
-						end;
-					end;
-
-					return Results, Rets;
+				    return (function(...) 
+				      return {...}, select('#', ...) 
+				    end)(Stk[A](unpack(Args, 1, Limit - A)));
+				  else
+				    return (function(...) 
+				      return {...}, select('#', ...) 
+				    end)(Stk[A]());
+				  end;
 				elseif (Enum == 30) then -- RETURN
 					local A	= Inst[1];
 					local B	= Inst[2];
